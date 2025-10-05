@@ -1,0 +1,616 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Air Quality Dashboard</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+	<link rel="stylesheet" href="/static/styles.css" />
+	<link rel="stylesheet" href="/static/layout-customizer.css" />
+</head>
+<body>
+	<div class="container">
+		<!-- 🌤️ Weather Status Bar at Top -->
+		<div class="top-weather-bar">
+			<div class="weather-bar-left">
+				<img class="weather-bar-icon" src="" alt="" style="width:48px;height:48px;display:none" />
+				<div class="weather-bar-info">
+					<div class="weather-bar-location">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:middle;margin-right:6px;">
+							<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2" fill="none"/>
+							<circle cx="12" cy="10" r="3" fill="currentColor"/>
+						</svg>
+						<span id="weatherLocationName">Loading location...</span>
+					</div>
+					<div class="weather-bar-text">Loading weather...</div>
+					<div class="weather-bar-details"></div>
+				</div>
+			</div>
+			<div class="weather-bar-right">
+				<h2 style="margin:0;color:#e0e7ff;font-size:20px;">🌍 Air Quality Dashboard</h2>
+			</div>
+		</div>
+
+		<div class="layout">
+			<!-- LEFT COLUMN: NASA Satellite Analysis -->
+			<div class="nasa-left-section" id="nasa-section">
+				<div class="card nasa-space-card">
+					<div class="card-header nasa-header">
+						<svg class="nasa-logo" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<circle cx="12" cy="12" r="10" fill="url(#spaceGradient)"/>
+							<path d="M8 12h8M12 8v8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+							<circle cx="12" cy="12" r="2" fill="white"/>
+							<defs>
+								<linearGradient id="spaceGradient" x1="0" y1="0" x2="24" y2="24">
+									<stop offset="0%" stop-color="#1e3a8a"/>
+									<stop offset="100%" stop-color="#7c3aed"/>
+								</linearGradient>
+							</defs>
+						</svg>
+						🛰️ NASA Satellite Analysis
+						<div class="stars"></div>
+					</div>
+					<div class="card-body nasa-body">
+						<!-- Space Background SVG -->
+						<svg class="space-bg" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+							<defs>
+								<radialGradient id="spaceGlow">
+									<stop offset="0%" stop-color="#667eea" stop-opacity="0.2"/>
+									<stop offset="100%" stop-color="#764ba2" stop-opacity="0.05"/>
+								</radialGradient>
+							</defs>
+							<rect width="100%" height="100%" fill="url(#spaceGlow)"/>
+							<!-- Animated stars -->
+							<circle class="star" cx="10%" cy="15%" r="1" fill="white" opacity="0.8">
+								<animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/>
+							</circle>
+							<circle class="star" cx="85%" cy="25%" r="1.5" fill="white" opacity="0.6">
+								<animate attributeName="opacity" values="0.2;0.9;0.2" dur="4s" repeatCount="indefinite"/>
+							</circle>
+							<circle class="star" cx="45%" cy="10%" r="1" fill="white" opacity="0.7">
+								<animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite"/>
+							</circle>
+							<circle class="star" cx="70%" cy="80%" r="1" fill="white" opacity="0.5">
+								<animate attributeName="opacity" values="0.3;0.8;0.3" dur="3.5s" repeatCount="indefinite"/>
+							</circle>
+						</svg>
+
+						<!-- Pre-loaded NASA Data Cards -->
+						<div class="nasa-data-grid">
+							<div class="nasa-data-card aerosol-card">
+								<div class="nasa-card-icon">☁️</div>
+								<div class="nasa-card-title">Aerosol Optical Depth</div>
+								<div class="nasa-card-value">0.42</div>
+								<div class="nasa-card-status">Moderate</div>
+								<div class="nasa-card-detail">📊 Last 24h: ↑ 12%</div>
+							</div>
+
+							<div class="nasa-data-card fire-card">
+								<div class="nasa-card-icon">🔥</div>
+								<div class="nasa-card-title">Active Fires</div>
+								<div class="nasa-card-value">3</div>
+								<div class="nasa-card-status">Low Risk</div>
+								<div class="nasa-card-detail">🌍 Within 100km radius</div>
+							</div>
+
+							<div class="nasa-data-card precip-card">
+								<div class="nasa-card-icon">🌧️</div>
+								<div class="nasa-card-title">Precipitation</div>
+								<div class="nasa-card-value">2.5mm</div>
+								<div class="nasa-card-status">Light Rain</div>
+								<div class="nasa-card-detail">☔ Expected: 5-8mm</div>
+							</div>
+
+							<div class="nasa-data-card no2-card">
+								<div class="nasa-card-icon">💨</div>
+								<div class="nasa-card-title">NO₂ Levels</div>
+								<div class="nasa-card-value">45 ppb</div>
+								<div class="nasa-card-status">Good</div>
+								<div class="nasa-card-detail">🛰️ TEMPO Satellite</div>
+							</div>
+						</div>
+
+						<!-- Action Buttons -->
+						<div class="nasa-actions">
+							<button id="nasaComprehensiveBtn" class="nasa-btn primary-btn">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+									<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+									<path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" stroke-width="2"/>
+								</svg>
+								🌍 Complete Analysis
+							</button>
+							<button id="nasa7DayBtn" class="nasa-btn secondary-btn">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+									<rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+									<path d="M3 10h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2"/>
+								</svg>
+								📅 7-Day Forecast
+							</button>
+						</div>
+
+						<!-- NASA Status -->
+						<div id="nasaStatus" class="nasa-status">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+								<circle cx="12" cy="12" r="10" stroke="#10b981" stroke-width="2" fill="none"/>
+								<path d="M9 12l2 2 4-4" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+							<span>NASA Earthdata Active • 59 days remaining</span>
+							<div class="pulse-dot"></div>
+						</div>
+						<div id="nasaResults" style="margin-top:10px;font-size:12px;max-height:150px;overflow:auto;"></div>
+					</div>
+				</div>
+			</div>
+
+			<!-- CENTER COLUMN: Map and Cards -->
+			<div class="main-center-section">
+			<div class="main-map-section" id="map-section">
+				<div class="card map-space-card" id="mapCard">
+					<div class="card-header map-header">
+						<svg class="map-logo" width="24" height="24" viewBox="0 0 24 24" fill="none">
+							<path d="M12 2L2 7l10 5 10-5-10-5z" fill="url(#mapGradient)"/>
+							<path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="url(#mapGradient)" stroke-width="2" fill="none"/>
+							<defs>
+								<linearGradient id="mapGradient" x1="0" y1="0" x2="24" y2="24">
+									<stop offset="0%" stop-color="#6366f1"/>
+									<stop offset="100%" stop-color="#8b5cf6"/>
+								</linearGradient>
+							</defs>
+						</svg>
+						📍 Interactive Map
+						<button id="fullscreenBtn" class="fullscreen-btn" title="Fullscreen Map">
+							<span class="fullscreen-icon">⛶</span>
+						</button>
+					</div>
+					<div class="card-body map-body">
+						<!-- Space Background -->
+						<svg class="space-bg" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+							<defs>
+								<radialGradient id="mapGlow">
+									<stop offset="0%" stop-color="#6366f1" stop-opacity="0.15"/>
+									<stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.05"/>
+								</radialGradient>
+							</defs>
+							<rect width="100%" height="100%" fill="url(#mapGlow)"/>
+						</svg>
+
+						<div id="map" style="height:450px;border-radius:12px;position:relative;z-index:1;"></div>
+						
+						<!-- Map Controls -->
+						<div class="map-controls">
+							<div class="coords controls">
+								<label>Lat <input id="lat" type="number" step="0.0001" value="28.6139" /></label>
+								<label>Lon <input id="lon" type="number" step="0.0001" value="77.2090" /></label>
+								<button id="loadBtn">📍 Load</button>
+							</div>
+							
+							<!-- Location Search Bar -->
+							<div class="location-search-container">
+								<svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+									<circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+									<path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+								</svg>
+								<input 
+									id="locationSearch" 
+									type="text" 
+									placeholder="Search location (e.g., New Delhi, Tokyo, Paris...)" 
+									class="location-search-input"
+								/>
+								<button id="searchBtn" class="search-btn">🔍 Search</button>
+							</div>
+							<div id="searchResults" class="search-results"></div>
+						</div>
+
+						<!-- AQI Legend -->
+						<div class="aqi-legend">
+							<div class="legend-title">🌬️ Air Quality Index</div>
+							<div class="legend-items">
+								<span class="legend-chip good">● Good</span>
+								<span class="legend-chip moderate">● Moderate</span>
+								<span class="legend-chip sensitive">● Sensitive</span>
+								<span class="legend-chip unhealthy">● Unhealthy</span>
+								<span class="legend-chip very-unhealthy">● Very Bad</span>
+								<span class="legend-chip hazardous">● Hazardous</span>
+							</div>
+						</div>
+
+						<div id="status" class="map-status">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+								<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="#6366f1" stroke-width="2" fill="none"/>
+								<circle cx="12" cy="10" r="3" fill="#6366f1"/>
+							</svg>
+							<span>Click map to select location</span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="aqi-section">
+				<div class="card">
+					<div class="card-header">Realtime AQI <span id="realtimeBadge" class="badge" style="margin-left:8px">—</span></div>
+					<div class="card-body">
+						<div id="realtimeText">Waiting…</div>
+					</div>
+				</div>
+				<div class="card forecast-space-card" style="margin-top:12px" id="forecast-section">
+					<div class="card-header forecast-header">
+						<svg class="forecast-logo" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="url(#chartGradient)"/>
+							<circle cx="20" cy="6" r="2" fill="url(#chartGradient)"/>
+							<circle cx="20" cy="13" r="2" fill="url(#chartGradient)"/>
+							<circle cx="20" cy="18" r="2" fill="url(#chartGradient)"/>
+							<defs>
+								<linearGradient id="chartGradient" x1="0" y1="0" x2="24" y2="24">
+									<stop offset="0%" stop-color="#10b981"/>
+									<stop offset="50%" stop-color="#3b82f6"/>
+									<stop offset="100%" stop-color="#8b5cf6"/>
+								</linearGradient>
+							</defs>
+						</svg>
+						📊 AQI Forecast (7-day)
+						<div class="chart-sparkles"></div>
+					</div>
+					<div class="card-body forecast-body">
+						<!-- Space Background SVG -->
+						<svg class="space-bg" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+							<defs>
+								<radialGradient id="chartGlow">
+									<stop offset="0%" stop-color="#10b981" stop-opacity="0.15"/>
+									<stop offset="100%" stop-color="#059669" stop-opacity="0.05"/>
+								</radialGradient>
+							</defs>
+							<rect width="100%" height="100%" fill="url(#chartGlow)"/>
+							<!-- Grid lines -->
+							<line x1="0" y1="25%" x2="100%" y2="25%" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+							<line x1="0" y1="50%" x2="100%" y2="50%" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+							<line x1="0" y1="75%" x2="100%" y2="75%" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+						</svg>
+
+						<!-- AQI Info Cards -->
+						<div class="aqi-info-grid">
+							<div class="aqi-info-card good">
+								<div class="aqi-info-icon">😊</div>
+								<div class="aqi-info-label">Good</div>
+								<div class="aqi-info-range">0-50</div>
+							</div>
+							<div class="aqi-info-card moderate">
+								<div class="aqi-info-icon">😐</div>
+								<div class="aqi-info-label">Moderate</div>
+								<div class="aqi-info-range">51-100</div>
+							</div>
+							<div class="aqi-info-card sensitive">
+								<div class="aqi-info-icon">😷</div>
+								<div class="aqi-info-label">Unhealthy</div>
+								<div class="aqi-info-range">101-150</div>
+							</div>
+							<div class="aqi-info-card unhealthy">
+								<div class="aqi-info-icon">😨</div>
+								<div class="aqi-info-label">Very Bad</div>
+								<div class="aqi-info-range">151-200</div>
+							</div>
+						</div>
+
+						<!-- Chart Container with enhanced styling -->
+						<div class="chart-container">
+							<div class="chart-title">
+								<span>📈 Air Quality Index Trend</span>
+								<span class="chart-subtitle">Next 7 Days Prediction</span>
+							</div>
+							<canvas id="aqiChart"></canvas>
+							<div class="chart-legend">
+								<div class="legend-item">
+									<div class="legend-dot" style="background: linear-gradient(135deg, #10b981, #059669);"></div>
+									<span>Good (0-50)</span>
+								</div>
+								<div class="legend-item">
+									<div class="legend-dot" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"></div>
+									<span>Moderate (51-100)</span>
+								</div>
+								<div class="legend-item">
+									<div class="legend-dot" style="background: linear-gradient(135deg, #f59e0b, #ef4444);"></div>
+									<span>Unhealthy (101+)</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Forecast Status -->
+						<div class="forecast-status">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+								<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#fbbf24" stroke="#f59e0b" stroke-width="1"/>
+							</svg>
+							<span>AI-Powered Forecast • High Accuracy</span>
+							<div class="pulse-dot yellow-pulse"></div>
+						</div>
+					</div>
+				</div>
+				<div class="card weather-space-card" style="margin-top:12px" id="weather-section">
+					<div class="card-header weather-header">
+						<svg class="weather-logo" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<circle cx="12" cy="12" r="5" fill="url(#sunGradient)"/>
+							<g stroke="url(#sunGradient)" stroke-width="2" stroke-linecap="round">
+								<line x1="12" y1="1" x2="12" y2="3"/>
+								<line x1="12" y1="21" x2="12" y2="23"/>
+								<line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+								<line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+								<line x1="1" y1="12" x2="3" y2="12"/>
+								<line x1="21" y1="12" x2="23" y2="12"/>
+								<line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+								<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+							</g>
+							<defs>
+								<linearGradient id="sunGradient" x1="0" y1="0" x2="24" y2="24">
+									<stop offset="0%" stop-color="#fbbf24"/>
+									<stop offset="100%" stop-color="#f59e0b"/>
+								</linearGradient>
+							</defs>
+						</svg>
+						🌤️ 7-Day Weather Forecast
+						<div class="weather-particles"></div>
+					</div>
+					<div class="card-body weather-body">
+						<!-- Space Background SVG -->
+						<svg class="space-bg" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+							<defs>
+								<radialGradient id="weatherGlow">
+									<stop offset="0%" stop-color="#60a5fa" stop-opacity="0.2"/>
+									<stop offset="100%" stop-color="#3b82f6" stop-opacity="0.05"/>
+								</radialGradient>
+							</defs>
+							<rect width="100%" height="100%" fill="url(#weatherGlow)"/>
+							<!-- Animated clouds -->
+							<ellipse cx="15%" cy="20%" rx="20" ry="12" fill="rgba(255,255,255,0.1)">
+								<animate attributeName="cx" values="15%;85%;15%" dur="20s" repeatCount="indefinite"/>
+							</ellipse>
+							<ellipse cx="75%" cy="70%" rx="25" ry="15" fill="rgba(255,255,255,0.08)">
+								<animate attributeName="cx" values="75%;10%;75%" dur="25s" repeatCount="indefinite"/>
+							</ellipse>
+						</svg>
+
+						<!-- Pre-loaded 7-Day Forecast Cards -->
+						<div class="weather-forecast-grid">
+							<div class="weather-day-card">
+								<div class="day-name">Monday</div>
+								<div class="day-icon">☀️</div>
+								<div class="day-temp">28°C</div>
+								<div class="day-condition">Clear Sky</div>
+								<div class="day-details">
+									<span>💧 45%</span>
+									<span>💨 12 km/h</span>
+								</div>
+							</div>
+
+							<div class="weather-day-card">
+								<div class="day-name">Tuesday</div>
+								<div class="day-icon">⛅</div>
+								<div class="day-temp">26°C</div>
+								<div class="day-condition">Partly Cloudy</div>
+								<div class="day-details">
+									<span>💧 55%</span>
+									<span>💨 15 km/h</span>
+								</div>
+							</div>
+
+							<div class="weather-day-card">
+								<div class="day-name">Wednesday</div>
+								<div class="day-icon">🌧️</div>
+								<div class="day-temp">24°C</div>
+								<div class="day-condition">Light Rain</div>
+								<div class="day-details">
+									<span>💧 75%</span>
+									<span>💨 18 km/h</span>
+								</div>
+							</div>
+
+							<div class="weather-day-card">
+								<div class="day-name">Thursday</div>
+								<div class="day-icon">⛈️</div>
+								<div class="day-temp">22°C</div>
+								<div class="day-condition">Thunderstorm</div>
+								<div class="day-details">
+									<span>💧 85%</span>
+									<span>💨 25 km/h</span>
+								</div>
+							</div>
+
+							<div class="weather-day-card">
+								<div class="day-name">Friday</div>
+								<div class="day-icon">🌦️</div>
+								<div class="day-temp">25°C</div>
+								<div class="day-condition">Scattered Rain</div>
+								<div class="day-details">
+									<span>💧 65%</span>
+									<span>💨 20 km/h</span>
+								</div>
+							</div>
+
+							<div class="weather-day-card">
+								<div class="day-name">Saturday</div>
+								<div class="day-icon">🌤️</div>
+								<div class="day-temp">27°C</div>
+								<div class="day-condition">Mostly Sunny</div>
+								<div class="day-details">
+									<span>💧 40%</span>
+									<span>💨 10 km/h</span>
+								</div>
+							</div>
+
+							<div class="weather-day-card">
+								<div class="day-name">Sunday</div>
+								<div class="day-icon">☀️</div>
+								<div class="day-temp">29°C</div>
+								<div class="day-condition">Sunny</div>
+								<div class="day-details">
+									<span>💧 35%</span>
+									<span>💨 8 km/h</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Weather Status -->
+						<div class="weather-status">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+								<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="#3b82f6"/>
+								<circle cx="12" cy="12" r="3" fill="white"/>
+							</svg>
+							<span>Live Weather Data • Updated 5 mins ago</span>
+							<div class="pulse-dot blue-pulse"></div>
+						</div>
+
+						<div id="weatherForecastWidget" style="display:none;">
+							<div id="forecastHeader">
+								<div style="font-size:16px;font-weight:700;color:#e0e7ff;margin-bottom:4px;">🌤️ 7-Day Weather Forecast</div>
+								<div id="forecastLocation" style="font-size:12px;color:#cbd5e1;margin-bottom:2px;"></div>
+								<div id="forecastSources" style="font-size:11px;color:#94a3b8;"></div>
+							</div>
+							<div id="forecastContainer">
+								<!-- Forecast cards will be inserted here -->
+							</div>
+							<div id="forecastChart" style="margin-top:15px;height:140px;background:rgba(15,23,42,0.3);border-radius:8px;border:1px solid rgba(99,102,241,0.3);padding:8px;">
+								<canvas id="tempChart" width="100%" height="140"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="card" style="margin-top:12px">
+					<div class="card-header">🎬 24-Hour Weather Timeline</div>
+					<div class="card-body">
+						<div id="hourlyVideoWidget" style="display:none;">
+							<div id="videoHeader" style="margin-bottom:15px;">
+								<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:4px;">🎬 Real-Time Weather Forecast</div>
+								<div id="videoLocation" style="font-size:12px;color:#64748b;margin-bottom:8px;"></div>
+								<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+									<button id="playBtn" style="background:#10b981;color:white;padding:6px 12px;border-radius:6px;font-size:12px;">▶️ Play</button>
+									<button id="pauseBtn" style="background:#ef4444;color:white;padding:6px 12px;border-radius:6px;font-size:12px;">⏸️ Pause</button>
+									<button id="resetBtn" style="background:#64748b;color:white;padding:6px 12px;border-radius:6px;font-size:12px;">🔄 Reset</button>
+									<select id="speedSelect" style="padding:4px 8px;border-radius:4px;font-size:12px;">
+										<option value="1">1x Speed</option>
+										<option value="2">2x Speed</option>
+										<option value="4">4x Speed</option>
+									</select>
+								</div>
+								<div style="background:#f1f5f9;padding:8px;border-radius:6px;font-size:11px;color:#475569;">
+									<div>Progress: <span id="timeProgress">0 / 24 hours</span></div>
+									<div style="background:#e2e8f0;height:6px;border-radius:3px;margin-top:4px;overflow:hidden;">
+										<div id="progressBar" style="background:#3b82f6;height:100%;width:0%;transition:width 0.3s;"></div>
+									</div>
+								</div>
+							</div>
+							<div id="currentHourDisplay" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:15px;border-radius:10px;margin-bottom:15px;text-align:center;">
+								<div id="currentTime" style="font-size:18px;font-weight:700;margin-bottom:8px;">Loading...</div>
+								<div style="display:flex;justify-content:space-around;align-items:center;">
+									<div>
+										<div id="currentIcon" style="font-size:36px;margin-bottom:4px;">☀️</div>
+										<div id="currentCondition" style="font-size:12px;">Clear</div>
+									</div>
+									<div style="text-align:left;">
+										<div id="currentTemp" style="font-size:24px;font-weight:700;">25°C</div>
+										<div id="currentAQI" style="font-size:14px;margin-top:2px;">AQI: 50</div>
+									</div>
+									<div style="text-align:left;font-size:12px;">
+										<div>🌡️ <span id="currentHumidity">60%</span></div>
+										<div>💨 <span id="currentWind">2.0 m/s</span></div>
+										<div>⏰ <span id="currentPeriod">Morning</span></div>
+									</div>
+								</div>
+							</div>
+							<div id="hourlyTimeline" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(60px,1fr));gap:8px;max-height:200px;overflow-y:auto;">
+								<!-- Hourly timeline cards will be inserted here -->
+							</div>
+						</div>
+						<div id="videoPlaceholder" style="text-align:center;color:#64748b;padding:20px;">
+							📍 Click on map to generate 24-hour weather timeline
+						</div>
+					</div>
+				</div>
+				<div class="card" style="margin-top:12px">
+					<div class="card-header">🤖 AI Health & Safety Suggestions</div>
+					<div class="card-body">
+						<div id="suggestionCards" style="display:none;">
+							<!-- AI suggestion cards will be dynamically inserted here -->
+						</div>
+						<div id="suggestionPlaceholder" style="text-align:center;color:#64748b;padding:20px;">
+							🤖 Load air quality data to get personalized AI suggestions
+						</div>
+						<div id="suggestionLoading" style="display:none;text-align:center;padding:20px;">
+							<div class="spinner" style="margin:0 auto 10px;"></div>
+							<div style="color:#64748b;font-size:14px;">AI is analyzing air quality data...</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			</div>
+
+			<!-- RIGHT COLUMN: Air Pollutants Analysis -->
+			<div class="pollutants-right-section" id="pollutants-section">
+				<div class="card pollutants-space-card">
+					<div class="card-header pollutants-header">
+						<svg class="pollutants-logo" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<circle cx="12" cy="12" r="3" fill="url(#pollutantsGradient)"/>
+							<circle cx="12" cy="12" r="6" stroke="url(#pollutantsGradient)" stroke-width="2" fill="none" opacity="0.5"/>
+							<circle cx="12" cy="12" r="9" stroke="url(#pollutantsGradient)" stroke-width="1.5" fill="none" opacity="0.3"/>
+							<defs>
+								<linearGradient id="pollutantsGradient" x1="0" y1="0" x2="24" y2="24">
+									<stop offset="0%" stop-color="#f59e0b"/>
+									<stop offset="50%" stop-color="#ef4444"/>
+									<stop offset="100%" stop-color="#dc2626"/>
+								</linearGradient>
+							</defs>
+						</svg>
+						💨 Air Pollutants Analysis
+						<div class="pollutants-particles"></div>
+					</div>
+					<div class="card-body pollutants-body">
+						<!-- Space Background SVG -->
+						<svg class="space-bg" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+							<defs>
+								<radialGradient id="pollutantsGlow">
+									<stop offset="0%" stop-color="#ef4444" stop-opacity="0.2"/>
+									<stop offset="100%" stop-color="#dc2626" stop-opacity="0.05"/>
+								</radialGradient>
+							</defs>
+							<rect width="100%" height="100%" fill="url(#pollutantsGlow)"/>
+							<!-- Animated particles -->
+							<circle class="particle" cx="15%" cy="20%" r="2" fill="#fbbf24" opacity="0.6">
+								<animate attributeName="opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite"/>
+								<animate attributeName="cy" values="20%;25%;20%" dur="3s" repeatCount="indefinite"/>
+							</circle>
+							<circle class="particle" cx="80%" cy="35%" r="1.5" fill="#f59e0b" opacity="0.5">
+								<animate attributeName="opacity" values="0.2;0.7;0.2" dur="2.5s" repeatCount="indefinite"/>
+								<animate attributeName="cx" values="80%;75%;80%" dur="4s" repeatCount="indefinite"/>
+							</circle>
+							<circle class="particle" cx="50%" cy="60%" r="2.5" fill="#ef4444" opacity="0.4">
+								<animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" repeatCount="indefinite"/>
+								<animate attributeName="r" values="2;3;2" dur="2s" repeatCount="indefinite"/>
+							</circle>
+						</svg>
+
+						<!-- Pollutants Grid -->
+						<div id="pollutantsGrid" class="pollutants-grid" style="display:none;">
+							<!-- Pollutant cards will be inserted here dynamically -->
+						</div>
+						<div id="pollutantsPlaceholder" class="pollutants-placeholder">
+							<div class="placeholder-icon">💨</div>
+							<div class="placeholder-text">Loading pollutants data...</div>
+							<div class="placeholder-spinner"></div>
+						</div>
+
+						<!-- Pollutants Status -->
+						<div class="pollutants-status">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+								<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#f59e0b" stroke-width="2"/>
+							</svg>
+							<span>Real-time Air Quality Monitoring</span>
+							<div class="pulse-dot orange-pulse"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<script src="/static/app.js"></script>
+	<script src="/static/layout-customizer.js"></script>
+</body>
+</html>
