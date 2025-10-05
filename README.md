@@ -118,6 +118,9 @@ Visit: http://localhost:5000
 - Get FREE: https://aistudio.google.com/app/apikey
 - Create API Key → Copy
 
+### NASA EDSA TOKEN
+- Get FREE: https://NASA.com/apikey
+- Create API Key → Copy
 ---
 
 ## 🚂 Deploy to Railway
