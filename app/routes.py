@@ -525,7 +525,13 @@ def quick_predict_current():
 
 
 # TEMPO Satellite Data Integration Routes
-from .tempo_processor import tempo_processor
+# Make TEMPO processor optional (requires xarray and netCDF4)
+try:
+	from .tempo_processor import tempo_processor
+	TEMPO_AVAILABLE = True
+except ImportError:
+	tempo_processor = None
+	TEMPO_AVAILABLE = False
 
 # NASA Earthdata Integration Routes
 from .nasa_earthdata import NASAEarthdataClient
