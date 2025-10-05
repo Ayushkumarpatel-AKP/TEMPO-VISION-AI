@@ -43,3 +43,4 @@ temp/
 build/
 dist/
 *.egg-info/
+.vercel
